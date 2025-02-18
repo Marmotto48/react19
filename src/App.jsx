@@ -1,47 +1,55 @@
-import { useState } from "react";
 import "./App.css";
-import { loginUser } from "./api/user";
-import { useActionState } from "react";
-import Button from "./components/button";
+import { useOptimistic, useActionState } from "react";
 
 function App() {
   // states
-  const [data, formAction, pending] = useActionState(login, {
-    user: null,
-    error: null,
-  });
-  async function login(prevState, formData) {
-    const username = formData.get("username");
-    const password = formData.get("password");
+  const [data, formAction, pending] = useActionState(addTodo, []);
+  const [opTodoList, setOpTodoList] = useOptimistic(
+    data,
+    // callback function
+    (prevTodos, newTodo) => [...prevTodos, { text: newTodo, pending: true }]
+  );
 
-    try {
-      const response = await loginUser(username, password);
-      return { user: response.data };
-    } catch (error) {
-      return { user: null, error: error.error };
-    }
+  console.log("data", data);
+  async function addTodo(prevState, formData) {
+    const newTodo = formData.get("todo");
+    setOpTodoList(newTodo);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return [...prevState, { text: newTodo, pending: false }];
   }
+
   return (
     <div
       style={{
         display: "flex",
         justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
       }}
     >
+      <h2>useOptimistic Hook</h2>
       <form action={formAction}>
-        <label htmlFor="user">First name </label>
-        <input type="text" id="user" name="username" placeholder="user" />
-        <br />
-        <br />
-        <label htmlFor="password-id">First name </label>
-        <input type="password" name="password" placeholder="password" />
-        <br />
-        <br />
-
-        <Button />
-        {data?.user && <p style={{ color: "green" }}>User logged in</p>}
-        {data?.error && <p style={{ color: "red" }}>{data?.error} </p>}
+        <input
+          type="text"
+          id="todo"
+          name="todo"
+          placeholder="add to do..."
+          required
+        />
+        <button disabled={pending} type="submit">
+          {pending ? "adding ..." : "add +"}
+        </button>
       </form>
+      <ul>
+        {opTodoList?.map((item, index) => {
+          return (
+            <li key={index}>
+              {item.text}
+              {item.pending && <span>Adding...</span>}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
