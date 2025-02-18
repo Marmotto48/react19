@@ -10,7 +10,6 @@ function App() {
     (prevTodos, newTodo) => [...prevTodos, { text: newTodo, pending: true }]
   );
 
-  console.log("data", data);
   async function addTodo(prevState, formData) {
     const newTodo = formData.get("todo");
     setOpTodoList(newTodo);
